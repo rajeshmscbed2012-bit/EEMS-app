@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>EEMS Pre-Hospital Care Record</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Ensure preview buttons don't print */
+    @media print { .no-print { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="lang-toggle">
+        <button class="lang-btn active" onclick="app.setLanguage('en')">English</button>
+        <button class="lang-btn" onclick="app.setLanguage('ta')">தமிழ்</button>
+      </div>
+      <div class="header-content">
+        <h1>
+          <span>🚑</span>
+          <span data-translate="title">EEMS Pre-Hospital Care Record</span>
+        </h1>
+        <h3 data-translate="subtitle">EMRI GREEN HEALTH SERVICES – GVK EMRI<br>108 Emergency Ambulance Service</h3>
+      </div>
+    </div>
+
+    <!-- Progress Indicator -->
+    <div class="progress-container">
+      <div class="progress-steps" id="progressSteps"></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer"></div>
+
+    <!-- Form Container -->
+    <form id="eemsForm" novalidate>
+      <!-- Step 1: Case Details -->
+      <div class="form-step active" data-step="1">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">📋</div>
+            <h2 data-translate="case_details">Case Details</h2>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required" data-translate="patient_name">Patient Name</label>
+              <input type="text" name="patient_name" required />
+            </div>
+
+            <div class="form-group">
+              <label class="required" data-translate="gender">Gender</label>
+              <div class="radio-group">
+                <div class="radio-item">
+                  <input type="radio" name="gender" id="gender_m" value="M" required />
+                  <label for="gender_m">Male</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="gender" id="gender_f" value="F" />
+                  <label for="gender_f">Female</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="gender" id="gender_o" value="O" />
+                  <label for="gender_o">Other</label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="age_group">Age Group</label>
+              <select name="age_group" onchange="app.toggleAgeFields(this.value)">
+                <option value="">Select Age Group</option>
+                <option value="adult">Adult</option>
+                <option value="neonate">Neonate</option>
+                <option value="infant">Infant</option>
+                <option value="pediatric">Pediatric</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="ageFields">
+              <label data-translate="age">Age</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="number" name="age_years" placeholder="Years" min="0" max="150" />
+                <input type="number" name="age_months" placeholder="Months" min="0" max="11" />
+                <input type="number" name="age_days" placeholder="Days" min="0" max="30" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required" data-translate="loc">Level of Consciousness (AVPU)</label>
+              <div class="radio-group">
+                <div class="radio-item">
+                  <input type="radio" name="loc" id="loc_a" value="A" required />
+                  <label for="loc_a" class="tooltip" data-tooltip="Alert">A</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="loc" id="loc_v" value="V" />
+                  <label for="loc_v" class="tooltip" data-tooltip="Verbal">V</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="loc" id="loc_p" value="P" />
+                  <label for="loc_p" class="tooltip" data-tooltip="Pain">P</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="loc" id="loc_u" value="U" />
+                  <label for="loc_u" class="tooltip" data-tooltip="Unresponsive">U</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label data-translate="breathing">Breathing Pattern</label>
+              <select name="breathing">
+                <option value="">Select</option>
+                <option value="normal">Normal</option>
+                <option value="shallow">Shallow</option>
+                <option value="labored">Labored</option>
+                <option value="agonal">Agonal</option>
+                <option value="absent">Absent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="chief_complaint">Chief Complaint</label>
+              <textarea name="chief_complaint" rows="3" placeholder="Describe the main complaint..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required" data-translate="triage">Triage Category</label>
+              <div class="radio-group">
+                <div class="radio-item" style="border-color: #d32f2f;">
+                  <input type="radio" name="triage" id="triage_red_r" value="red_resuscitation" required />
+                  <label for="triage_red_r">🔴 Red (Resuscitation)</label>
+                </div>
+                <div class="radio-item" style="border-color: #ff5722;">
+                  <input type="radio" name="triage" id="triage_red_u" value="red_urgent" />
+                  <label for="triage_red_u">🔴 Red (Very Urgent)</label>
+                </div>
+                <div class="radio-item" style="border-color: #ff9800;">
+                  <input type="radio" name="triage" id="triage_yellow" value="yellow" />
+                  <label for="triage_yellow">🟡 Yellow (Urgent)</label>
+                </div>
+                <div class="radio-item" style="border-color: #4caf50;">
+                  <input type="radio" name="triage" id="triage_green" value="green" />
+                  <label for="triage_green">🟢 Green (Non-Urgent)</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="required" data-translate="critical">Critical Patient</label>
+              <div class="radio-group">
+                <div class="radio-item">
+                  <input type="radio" name="critical" id="critical_yes" value="yes" required />
+                  <label for="critical_yes">Yes</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="critical" id="critical_no" value="no" />
+                  <label for="critical_no">No</label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Patient Address -->
+      <div class="form-step" data-step="2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">🏠</div>
+            <h2 data-translate="patient_address">Patient Address</h2>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="ration_card">Ration Card Type</label>
+              <div class="radio-group">
+                <div class="radio-item">
+                  <input type="radio" name="ration" id="ration_apl" value="APL" />
+                  <label for="ration_apl">APL</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="ration" id="ration_bpl" value="BPL" />
+                  <label for="ration_bpl">BPL</label>
+                </div>
+                <div class="radio-item">
+                  <input type="radio" name="ration" id="ration_none" value="None" />
+                  <label for="ration_none">None</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label data-translate="social_status">Social Status</label>
+              <select name="social_status">
+                <option value="">Select</option>
+                <option value="BC">BC</option>
+                <option value="SC">SC</option>
+                <option value="ST">ST</option>
+                <option value="OC">OC</option>
+                <option value="Others">Others</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="id_proof">ID Proof Number</label>
+              <input type="text" name="id_proof" placeholder="Aadhar/PAN/Voter ID" />
+            </div>
+
+            <div class="form-group">
+              <label data-translate="contact">Contact Number</label>
+              <input type="tel" name="contact" placeholder="+91 XXXXX XXXXX" pattern="[0-9]{10}" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="address">Address</label>
+            <textarea name="address" rows="3" placeholder="Complete address..."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Signs & Symptoms -->
+      <div class="form-step" data-step="3">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">🩺</div>
+            <h2 data-translate="signs_symptoms">Signs & Symptoms</h2>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="select_symptoms">Select all applicable symptoms</label>
+            <div class="multiselect" id="symptomsSelect">
+              <div class="multiselect-toggle" onclick="app.toggleMultiselect('symptomsSelect')">
+                <div class="selected-items" id="symptomsSelected">
+                  <span style="color: #999;">Click to select symptoms...</span>
+                </div>
+              </div>
+              <div class="multiselect-dropdown" id="symptomsDropdown"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Photo Documentation</label>
+            <input type="file" accept="image/*" capture="camera" multiple onchange="app.handlePhotos(this.files)" />
+            <div id="photoPreview" class="photo-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Vital Signs -->
+      <div class="form-step" data-step="4">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">❤️</div>
+            <h2 data-translate="vitals">Vital Signs</h2>
+          </div>
+
+          <table class="vitals-table">
+            <thead>
+              <tr>
+                <th>Vital Sign</th>
+                <th>At Scene</th>
+                <th>Enroute</th>
+                <th>At Hospital</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Blood Pressure</strong></td>
+                <td><input type="text" name="bp_scene" placeholder="120/80" /></td>
+                <td><input type="text" name="bp_enroute" placeholder="120/80" /></td>
+                <td><input type="text" name="bp_hospital" placeholder="120/80" /></td>
+              </tr>
+              <tr>
+                <td><strong>Pulse Rate</strong></td>
+                <td><input type="number" name="pulse_scene" placeholder="72" /></td>
+                <td><input type="number" name="pulse_enroute" placeholder="72" /></td>
+                <td><input type="number" name="pulse_hospital" placeholder="72" /></td>
+              </tr>
+              <tr>
+                <td><strong>Respiratory Rate</strong></td>
+                <td><input type="number" name="rr_scene" placeholder="16" /></td>
+                <td><input type="number" name="rr_enroute" placeholder="16" /></td>
+                <td><input type="number" name="rr_hospital" placeholder="16" /></td>
+              </tr>
+              <tr>
+                <td><strong>SpO₂ (%)</strong></td>
+                <td><input type="number" name="spo2_scene" placeholder="98" min="0" max="100" /></td>
+                <td><input type="number" name="spo2_enroute" placeholder="98" min="0" max="100" /></td>
+                <td><input type="number" name="spo2_hospital" placeholder="98" min="0" max="100" /></td>
+              </tr>
+              <tr>
+                <td><strong>Temperature (°F)</strong></td>
+                <td><input type="number" name="temp_scene" placeholder="98.6" step="0.1" /></td>
+                <td><input type="number" name="temp_enroute" placeholder="98.6" step="0.1" /></td>
+                <td><input type="number" name="temp_hospital" placeholder="98.6" step="0.1" /></td>
+              </tr>
+              <tr>
+                <td><strong>Blood Sugar (mg/dL)</strong></td>
+                <td><input type="number" name="sugar_scene" placeholder="100" /></td>
+                <td><input type="number" name="sugar_enroute" placeholder="100" /></td>
+                <td><input type="number" name="sugar_hospital" placeholder="100" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 5: Pre-Hospital Care & History -->
+      <div class="form-step" data-step="5">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">💊</div>
+            <h2 data-translate="care_history">Pre-Hospital Care & History</h2>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="past_history">Past Medical History</label>
+            <div class="multiselect" id="historySelect">
+              <div class="multiselect-toggle" onclick="app.toggleMultiselect('historySelect')">
+                <div class="selected-items" id="historySelected">
+                  <span style="color: #999;">Select medical history...</span>
+                </div>
+              </div>
+              <div class="multiselect-dropdown" id="historyDropdown"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="medications">Current Medications</label>
+            <textarea name="medications" rows="3" placeholder="List current medications..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="allergies">Allergies</label>
+            <input type="text" name="allergies" placeholder="Drug allergies, food allergies, etc." />
+          </div>
+
+          <div class="form-group">
+            <label data-translate="interventions">Interventions Performed</label>
+            <div class="multiselect" id="careSelect">
+              <div class="multiselect-toggle" onclick="app.toggleMultiselect('careSelect')">
+                <div class="selected-items" id="careSelected">
+                  <span style="color: #999;">Select interventions...</span>
+                </div>
+              </div>
+              <div class="multiselect-dropdown" id="careDropdown"></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="medications_given">Medications Administered</label>
+            <textarea name="medications_given" rows="3" placeholder="List medications given with dosage..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="transport_events">Events During Transport</label>
+            <div class="radio-group">
+              <div class="radio-item">
+                <input type="radio" name="transport_event" id="event_improved" value="improved" />
+                <label for="event_improved">Improved</label>
+              </div>
+              <div class="radio-item">
+                <input type="radio" name="transport_event" id="event_stable" value="stable" />
+                <label for="event_stable">Stable</label>
+              </div>
+              <div class="radio-item">
+                <input type="radio" name="transport_event" id="event_worse" value="worse" />
+                <label for="event_worse">Worsened</label>
+              </div>
+              <div class="radio-item">
+                <input type="radio" name="transport_event" id="event_death" value="death" />
+                <label for="event_death">Death</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Admission -->
+      <div class="form-step" data-step="6">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">🏥</div>
+            <h2 data-translate="admission">Admission Details</h2>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="hospital_name">Receiving Hospital</label>
+              <input type="text" name="hospital_name" placeholder="Hospital name" />
+            </div>
+
+            <div class="form-group">
+              <label data-translate="handover_time">Handover Time</label>
+              <input type="time" name="handover_time" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="receiving_staff">Receiving Staff Name</label>
+              <input type="text" name="receiving_staff" placeholder="Name of receiving medical staff" />
+            </div>
+
+            <div class="form-group">
+              <label data-translate="staff_designation">Staff Designation</label>
+              <input type="text" name="staff_designation" placeholder="Doctor/Nurse/etc." />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="handover_notes">Handover Notes</label>
+            <textarea name="handover_notes" rows="3" placeholder="Additional notes for handover..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label data-translate="emt_name">EMT Name</label>
+              <input type="text" name="emt_name" placeholder="Emergency Medical Technician name" />
+            </div>
+
+            <div class="form-group">
+              <label data-translate="pilot_name">Pilot/Driver Name</label>
+              <input type="text" name="pilot_name" placeholder="Ambulance driver name" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-translate="vehicle_number">Ambulance Number</label>
+            <input type="text" name="vehicle_number" placeholder="TN XX XX XXXX" />
+          </div>
+
+          <div class="form-group">
+            <label>EMT Signature</label>
+            <div class="signature-pad">
+              <canvas id="emtSignatureCanvas"></canvas>
+              <button type="button" onclick="app.clearSignature('emt')">Clear</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Receiving Staff Signature</label>
+            <div class="signature-pad">
+              <canvas id="staffSignatureCanvas"></canvas>
+              <button type="button" onclick="app.clearSignature('staff')">Clear</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: ERCP Advice (simple) -->
+      <div class="form-step" data-step="7" id="ercpStep">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">🧑‍⚕️</div>
+            <h2 data-translate="ercp_advice">ERCP Advice</h2>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="required" data-translate="ercp_consultant_name">Name</label>
+              <input type="text" name="ercp_consultant_name" placeholder="Consultant/Doctor name" required />
+            </div>
+
+            <div class="form-group">
+              <label class="required" data-translate="ercp_advice_text">Advice</label>
+              <textarea name="ercp_advice_text" rows="4" placeholder="Type the advice..." required></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8: Preview & Print -->
+      <div class="form-step" data-step="8" id="previewStep">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-icon">🖨</div>
+            <h2 data-translate="preview_print">Preview & Print</h2>
+          </div>
+
+          <div class="form-group">
+            <div class="no-print" style="display: flex; gap: 10px; margin-bottom: 12px;">
+              <button type="button" class="btn btn-secondary" onclick="app.previousStep()">← Edit</button>
+              <button type="button" class="btn btn-primary" onclick="app.printForm()">🖨 Print</button>
+            </div>
+
+            <div id="previewContainer" class="preview-container">
+              <!-- Populated by app.buildPreview() -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="nav-buttons">
+        <button type="button" class="btn btn-secondary" id="prevBtn" onclick="app.previousStep()">← Previous</button>
+        <button type="button" class="btn btn-primary" id="nextBtn" onclick="app.nextStep()">Next →</button>
+        <button type="button" class="btn btn-success" id="submitBtn" style="display: none;" onclick="app.submitForm()">✓ Submit Form</button>
+      </div>
+    </form>
+
+    <!-- Loading Spinner -->
+    <div class="spinner" id="spinner"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
