@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EEMS Pre-Hospital Care Record</title>
+    <style>
+        :root {
+            --primary-color: #00897b;
+            --primary-dark: #00695c;
+            --primary-light: #26a69a;
+            --secondary-color: #e0f2f1;
+            --danger-color: #d32f2f;
+            --warning-color: #ff9800;
+            --success-color: #4caf50;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --border-color: #b2dfdb;
+            --background: #f0f4f8;
+            --card-background: #f7fafc;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 24px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.15);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #e8f5e9 100%);
+            min-height: 100vh; line-height: 1.6; color: var(--text-primary);
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; animation: fadeIn 0.5s ease; }
+        .header {
+            background: var(--white); border-radius: var(--border-radius); padding: 30px; margin-bottom: 30px; box-shadow: var(--shadow-md);
+            position: relative; overflow: hidden;
+        }
+        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, var(--primary-color), var(--primary-light)); }
+        .header-content { text-align: center; }
+        .header h1 { color: var(--primary-color); font-size: 2rem; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .header h3 { color: var(--text-secondary); font-weight: 400; font-size: 1.1rem; }
+        .case-id { text-align: center; color: var(--text-secondary); margin-top: 8px; font-size: 0.9rem; }
+        .lang-toggle { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
+        .lang-btn {
+            padding: 8px 16px; border: 2px solid var(--primary-color); background: var(--white); color: var(--primary-color);
+            border-radius: 20px; cursor: pointer; font-weight: 600; transition: var(--transition);
+        }
+        .lang-btn.active { background: var(--primary-color); color: var(--white); }
+        .lang-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+        .progress-container { background: var(--white); border-radius: var(--border-radius); padding: 20px; margin-bottom: 30px; box-shadow: var(--shadow-sm); }
+        .progress-steps { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; }
+        .progress-step { flex: 1; text-align: center; position: relative; min-width: 80px; }
+        .progress-step::before {
+            content: attr(data-step); display: block; width: 40px; height: 40px; margin: 0 auto 10px; background: var(--white);
+            border: 3px solid #ddd; border-radius: 50%; line-height: 34px; font-weight: bold; color: #999; transition: var(--transition);
+        }
+        .progress-step.active::before { background: var(--primary-color); border-color: var(--primary-color); color: var(--white); transform: scale(1.1); }
+        .progress-step.completed::before { background: var(--success-color); border-color: var(--success-color); color: var(--white); content: '✓'; }
+        .progress-step span { font-size: 0.85rem; color: var(--text-secondary); }
+        .progress-bar { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary-color), var(--primary-light)); border-radius: 4px; transition: width 0.5s ease; }
+        .form-step { display: none; animation: slideIn 0.3s ease; }
+        .form-step.active { display: block; }
+        .card { background: var(--white); border-radius: var(--border-radius); padding: 25px; margin-bottom: 20px; box-shadow: var(--shadow-sm); border-left: 4px solid var(--primary-light); transition: var(--transition); }
+        .card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+        .card-header { display: flex; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--secondary-color); }
+        .card-icon { width: 40px; height: 40px; background: var(--secondary-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; font-size: 1.2rem; }
+        .card h2 { color: var(--primary-color); font-size: 1.3rem; margin: 0; }
+        .form-group { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-primary); font-weight: 500; font-size: 0.95rem; }
+        label.required::after { content: ' *'; color: var(--danger-color); }
+        input[type="text"], input[type="number"], input[type="tel"], input[type="email"], input[type="date"], input[type="time"], select, textarea {
+            width: 100%; padding: 10px 12px; border: 2px solid var(--border-color); border-radius: 6px; font-size: 1rem; transition: var(--transition); background: var(--white);
+        }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 137, 123, 0.1); }
+        textarea { resize: vertical; min-height: 100px; }
+        .radio-group, .checkbox-group { display: flex; flex-wrap: wrap; gap: 15px; padding: 10px 0; }
+        .radio-item, .checkbox-item {
+            display: flex; align-items: center; padding: 8px 15px; background: var(--card-background); border-radius: 6px; cursor: pointer; transition: var(--transition); border: 2px solid transparent;
+        }
+        .radio-item:hover, .checkbox-item:hover { background: var(--secondary-color); border-color: var(--primary-light); }
+        .radio-item input, .checkbox-item input { margin-right: 8px; cursor: pointer; }
+        .radio-item input:checked + label, .checkbox-item input:checked + label { font-weight: 600; color: var(--primary-color); }
+        .multiselect { position: relative; }
+        .multiselect-toggle {
+            width: 100%; padding: 10px 12px; border: 2px solid var(--border-color); border-radius: 6px; background: var(--white); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: var(--transition);
+        }
+        .multiselect-toggle:hover { border-color: var(--primary-color); }
+        .multiselect-toggle::after { content: '▼'; font-size: 0.8rem; color: var(--text-secondary); transition: var(--transition); }
+        .multiselect.active .multiselect-toggle::after { transform: rotate(180deg); }
+        .multiselect-dropdown {
+            position: absolute; top: 100%; left: 0; right: 0; background: var(--white); border: 2px solid var(--border-color); border-radius: 6px; margin-top: 5px; max-height: 300px;
+            overflow-y: auto; z-index: 1000; display: none; box-shadow: var(--shadow-md);
+        }
+        .multiselect.active .multiselect-dropdown { display: block; animation: dropDown 0.3s ease; }
+        .multiselect-option { padding: 10px 15px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; }
+        .multiselect-option:hover { background: var(--secondary-color); }
+        .multiselect-option input { margin-right: 10px; }
+        .selected-items { display: flex; flex-wrap: wrap; gap: 8px; }
+        .selected-tag { background: var(--primary-light); color: var(--white); padding: 4px 10px; border-radius: 15px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px; }
+        .selected-tag .remove { cursor: pointer; font-weight: bold; margin-left: 5px; }
+        .vitals-table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border-radius: 8px; box-shadow: var(--shadow-sm); }
+        .vitals-table th, .vitals-table td { padding: 12px; text-align: center; border: 1px solid var(--border-color); }
+        .vitals-table th { background: var(--primary-color); color: var(--white); font-weight: 600; text-transform: uppercase; font-size: 0.9rem; letter-spacing: 0.5px; }
+        .vitals-table tr:nth-child(even) { background: var(--card-background); }
+        .vitals-table input { border: 1px solid var(--border-color); text-align: center; }
+        .btn { padding: 12px 24px; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: var(--transition); display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary-color); color: var(--white); }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+        .btn-secondary { background: var(--white); color: var(--primary-color); border: 2px solid var(--primary-color); }
+        .btn-secondary:hover { background: var(--secondary-color); }
+        .btn-danger { background: var(--danger-color); color: var(--white); }
+        .btn-success { background: var(--success-color); color: var(--white); }
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; padding: 20px; background: var(--white); border-radius: var(--border-radius); box-shadow: var(--shadow-sm); }
+        #alertContainer { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 10px; }
+        .alert { padding: 15px 20px; border-radius: 6px; display: flex; align-items: center; gap: 10px; animation: slideInRight 0.5s ease; box-shadow: var(--shadow-md); opacity: 1; transition: opacity 0.3s ease; }
+        .alert-danger { background: #ffebee; color: var(--danger-color); border-left: 4px solid var(--danger-color); }
+        .alert-success { background: #e8f5e9; color: var(--success-color); border-left: 4px solid var(--success-color); }
+        .alert-warning { background: #fff3e0; color: var(--warning-color); border-left: 4px solid var(--warning-color); }
+        .spinner { display: none; width: 40px; height: 40px; border: 4px solid var(--secondary-color); border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }
+        body.loading .spinner { display: block; }
+        .tooltip { position: relative; cursor: help; }
+        .tooltip::after { content: attr(data-tooltip); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%); background: var(--text-primary); color: var(--white); padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+        .tooltip:hover::after { opacity: 1; }
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px; }
+        .photo-grid img { width: 100%; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px; }
+        .signature-pad { border: 1px solid var(--border-color); border-radius: 4px; padding: 10px; background: #fdfdfd; }
+        .signature-pad canvas { border: 1px solid #ccc; background: var(--white); cursor: crosshair; width: 100%; height: 150px; border-radius: 4px; touch-action: none; user-select: none; }
+        .signature-pad button { margin-top: 10px; padding: 8px 16px; background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; transition: var(--transition); }
+        .signature-pad button:hover { background: #e0e0e0; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); }
+        .modal-content h3 { color: var(--primary-color); margin-bottom: 15px; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .hospital-option { padding: 10px; border-bottom: 1px solid var(--border-color); cursor: pointer; transition: var(--transition); }
+        .hospital-option:hover { background-color: var(--secondary-color); }
+        .hospital-option small { color: var(--text-secondary); font-size: 0.85rem; }
+        .clinical-alert { background-color: #fff8e1; border-left: 4px solid var(--warning-color); padding: 15px; margin-bottom: 20px; border-radius: var(--border-radius); }
+        .clinical-alert h4 { margin-top: 0; color: var(--warning-color); display: flex; align-items: center; gap: 8px; }
+        .time-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin: 20px 0; }
+        .time-metric { background: var(--white); padding: 15px; border-radius: var(--border-radius); box-shadow: var(--shadow-sm); text-align: center; }
+        .time-metric-value { font-size: 1.5rem; font-weight: bold; color: var(--primary-color); margin: 5px 0; }
+        .time-metric-label { font-size: 0.9rem; color: var(--text-secondary); }
+        @media (max-width: 768px) {
+            .container { padding: 10px; }
+            .header { padding: 20px; }
+            .header h1 { font-size: 1.5rem; }
+            .lang-toggle { position: static; margin-top: 15px; justify-content: center; }
+            .progress-steps { display: none; }
+            .form-row { grid-template-columns: 1fr; }
+            .vitals-table { display: block; overflow-x: auto; white-space: nowrap; }
+            .nav-buttons { flex-direction: column; gap: 10px; }
+            .btn { width: 100%; justify-content: center; }
+        }
+        @media print {
+            body { background: white; color: black; }
+            .header::before, .lang-toggle, .progress-container, .nav-buttons, .card:hover { display: none !important; }
+            .form-step { display: block !important; page-break-inside: avoid; }
+            .card { box-shadow: none; border: 1px solid #ddd; margin-bottom: 15px; padding: 15px; border-left: none; }
+            .multiselect-dropdown { display: none !important; }
+            .container, .header, .card, .vitals-table, .form-group { animation: none !important; transition: none !important; box-shadow: none !important; }
+            input, select, textarea { border: 1px solid #ccc !important; }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes dropDown { from { transform: translateY(-10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="lang-toggle">
+            <button class="lang-btn active" data-lang="en" onclick="app.setLanguage('en')">English</button>
+            <button class="lang-btn" data-lang="ta" onclick="app.setLanguage('ta')">தமிழ்</button>
+        </div>
+        <div class="header-content">
+            <h1><span>🚑</span><span data-translate="title">EEMS Pre-Hospital Care Record</span></h1>
+            <h3 data-translate="subtitle">EMRI GREEN HEALTH SERVICES – GVK EMRI<br>108 Emergency Ambulance Service</h3>
+            <div class="case-id" id="caseIdDisplay"></div>
+        </div>
+    </div>
+
+    <div class="progress-container">
+        <div class="progress-steps" id="progressSteps"></div>
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div id="alertContainer"></div>
+
+    <form id="eemsForm" novalidate>
+        <!-- Step 1 -->
+        <div class="form-step active" data-step="1">
+            <div class="card">
+                <div class="card-header"><div class="card-icon">📋</div><h2 data-translate="case_details">Case Details</h2></div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required" data-translate="patient_name">Patient Name</label>
+                        <input type="text" name="patient_name" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required" data-translate="gender">Gender</label>
+                        <div class="radio-group">
+                            <div class="radio-item"><input type="radio" name="gender" id="gender_m" value="M" required /><label for="gender_m">Male</label></div>
+                            <div class="radio-item"><input type="radio" name="gender" id="gender_f" value="F" /><label for="gender_f">Female</label></div>
+                            <div class="radio-item"><input type="radio" name="gender" id="gender_o" value="O" /><label for="gender_o">Other</label></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-translate="age_group">Age Group</label>
+                        <select name="age_group" onchange="app.toggleAgeFields(this.value)">
+                            <option value="">Select Age Group</option>
+                            <option value="adult">Adult</option>
+                            <option value="neonate">Neonate</option>
+                            <option value="infant">Infant</option>
+                            <option value="pediatric">Pediatric</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="ageFields">
+                        <label data-translate="age">Age</label>
+                        <div style="display: flex; gap: 10px;">
+                            <input type="number" name="age_years" placeholder="Years" min="0" max="150" />
+                            <input type="number" name="age_months" placeholder="Months" min="0" max="11" />
+                            <input type="number" name="age_days" placeholder="Days" min="0" max="30" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required" data-translate="loc">Level of Consciousness (AVPU)</label>
+                        <div class="radio-group">
+                            <div class="radio-item"><input type="radio" name="loc" id="loc_a" value="A" required /><label for="loc_a" class="tooltip" data-tooltip="Alert">A</label></div>
+                            <div class="radio-item"><input type="radio" name="loc" id="loc_v" value="V" /><label for="loc_v" class="tooltip" data-tooltip="Verbal">V</label></div>
+                            <div class="radio-item"><input type="radio" name="loc" id="loc_p" value="P" /><label for="loc_p" class="tooltip" data-tooltip="Pain">P</label></div>
+                            <div class="radio-item"><input type="radio" name="loc" id="loc_u" value="U" /><label for="loc_u" class="tooltip" data-tooltip="Unresponsive">U</label></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label data-translate="breathing">Breathing Pattern</label>
+                        <select name="breathing">
+                            <option value="">Select</option>
+                            <option value="normal">Normal</option>
+                            <option value="shallow">Shallow</option>
+                            <option value="labored">Labored</option>
+                            <option value="agonal">Agonal</option>
+                            <option value="absent">Absent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-translate="chief_complaint">Chief Complaint</label>
+                    <textarea name="chief_complaint" rows="3" placeholder="Describe the main complaint..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="required" data-translate="triage">Triage Category</label>
+                        <div class="radio-group">
+                            <div class="radio-item" style="border-color:#d32f2f;"><input type="radio" name="triage" id="triage_red_r" value="red_resuscitation" required /><label for="triage_red_r">🔴 Red (Resuscitation)</label></div>
+                            <div class="radio-item" style="border-color:#ff5722;"><input type="radio" name="triage" id="triage_red_u" value="red_urgent" /><label for="triage_red_u">🔴 Red (Very Urgent)</label></div>
+                            <div class="radio-item" style="border-color:#ff9800;"><input type="radio" name="triage" id="triage_yellow" value="yellow" /><label for="triage_yellow">🟡 Yellow (Urgent)</label></div>
+                            <div class="radio-item" style="border-color:#4caf50;"><input type="radio" name="triage" id="triage_green" value="green" /><label for="triage_green">🟢 Green (Non-Urgent)</label></div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="required" data-translate="critical">Critical Patient</label>
+                        <div class="radio-group">
+                            <div class="radio-item"><input type="radio" name="critical" id="critical_yes" value="yes" required /><label for="critical_yes">Yes</label></div>
+                            <div class="radio-item"><input type="radio" name="critical" id="critical_no" value="no" /><label for="critical_no">No</label></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="form-step" data-step="2">
+            <div class="card">
+                <div class="card-header"><div class="card-icon">🏠</div><h2 data-translate="patient_address">Patient Address</h2></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-translate="ration_card">Ration Card Type</label>
+                        <div class="radio-group">
+                            <div class="radio-item"><input type="radio" name="ration" id="ration_apl" value="APL" /><label for="ration_apl">APL</label></div>
+                            <div class="radio-item"><input type="radio" name="ration" id="ration_bpl" value="BPL" /><label for="ration_bpl">BPL</label></div>
+                            <div class="radio-item"><input type="radio" name="ration" id="ration_none" value="None" /><label for="ration_none">None</label></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label data-translate="social_status">Social Status</label>
+                        <select name="social_status">
+                            <option value="">Select</option>
+                            <option value="BC">BC</option>
+                            <option value="SC">SC</option>
+                            <option value="ST">ST</option>
+                            <option value="OC">OC</option>
+                            <option value="Others">Others</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label data-translate="id_proof">ID Proof Number</label>
+                        <input type="text" name="id_proof" placeholder="Aadhar/PAN/Voter ID" />
+                    </div>
+                    <div class="form-group">
+                        <label data-translate="contact">Contact Number</label>
+                        <input type="tel" name="contact" placeholder="+91 98765 43210" pattern="^(\+?91[-\s]?)?[6-9]\d{9}$" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-translate="address">Address</label>
+                    <textarea name="address" rows="3" placeholder="Complete address..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="form-step" data-step="3">
+            <div class="card">
+                <div class="card-header"><div class="card-icon">🩺</div><h2 data-translate="signs_symptoms">Signs & Symptoms</h2></div>
+                <div class="form-group">
+                    <label data-translate="select_symptoms">Select all applicable symptoms</label>
+                    <div class="multiselect" id="symptomsSelect">
+                        <div class="multiselect-toggle" onclick="app.toggleMultiselect('symptomsSelect')">
+                            <div class="selected-items" id="symptomsSelected"><span style="color:#999;">Click to select symptoms...</span></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="symptomsDropdown"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Photo Documentation</label>
+                    <input type="file" name="photos" accept="image/*" capture="camera" multiple onchange="app.handlePhotos(this.files)" />
+                    <div id="photoPreview" class="photo-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="form-step" data-step="4">
+            <div class="card">
+                <div class="card-header"><div class="card-icon">❤️</div><h2 data-translate="vitals">Vital Signs</h2></div>
+                <div class="vitals-table-wrapper">
+                    <table class="vitals-table">
+                        <thead><tr><th>Vital Sign</th><th>At Scene</th><th>Enroute</th><th>At Hospital</th></tr></thead>
+                        <tbody>
+                            <tr><td><strong>Blood Pressure</strong></td><td><input type="text" name="bp_scene" placeholder="120/80" /></td><td><input type="text" name="bp_enroute" placeholder="120/80" /></td><td><input type="text" name="bp_hospital" placeholder="120/80" /></td></tr>
+                            <tr><td><strong>Pulse Rate</strong></td><td><input type="number" name="pulse_scene" placeholder="72" /></td><td><input type="number" name="pulse_enroute" placeholder="72" /></td><td><input type="number" name="pulse_hospital" placeholder="72" /></td></tr>
+                            <tr><td><strong>Respiratory Rate</strong></td><td><input type="number" name="rr_scene" placeholder="16" /></td><td><input type="number" name="rr_enroute" placeholder="16" /></td><td><input type="number" name="rr_hospital" placeholder="16" /></td></tr>
+                            <tr><td><strong>SpO₂ (%)</strong></td><td><input type="number" name="spo2_scene" placeholder="98" min="0" max="100" /></td><td><input type="number" name="spo2_enroute" placeholder="98" min="0" max="100" /></td><td><input type="number" name="spo2_hospital" placeholder="98" min="0" max="100" /></td></tr>
+                            <tr><td><strong>Temperature (°F)</strong></td><td><input type="number" name="temp_scene" placeholder="98.6" step="0.1" /></td><td><input type="number" name="temp_enroute" placeholder="98.6" step="0.1" /></td><td><input type="number" name="temp_hospital" placeholder="98.6" step="0.1" /></td></tr>
+                            <tr><td><strong>Blood Sugar (mg/dL)</strong></td><td><input type="number" name="sugar_scene" placeholder="100" /></td><td><input type="number" name="sugar_enroute" placeholder="100" /></td><td><input type="number" name="sugar_hospital" placeholder="100" /></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="form-step" data-step="5">
+            <div class="card">
+                <div class="card-header"><div class="card-icon">💊</div><h2 data-translate="care_history">Pre-Hospital Care & History</h2></div>
+                <div class="form-group">
+                    <label data-translate="past_history">Past Medical History</label>
+                    <div class="multiselect" id="historySelect">
+                        <div class="multiselect-toggle" onclick="app.toggleMultiselect('historySelect')">
+                            <div class="selected-items" id="historySelected"><span style="color:#999;">Select medical history...</span></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="historyDropdown"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-translate="medications">Current Medications</label>
+                    <textarea name="medications" rows="3" placeholder="List current medications..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label data-translate="allergies">Allergies</label>
+                    <input type="text" name="allergies" placeholder="Drug allergies, food allergies, etc." />
+                </div>
+                <div class="form-group">
+                    <label data-translate="interventions">Interventions Performed</label>
+                    <div class="multiselect" id="careSelect">
+                        <div class="multiselect-toggle" onclick="app.toggleMultiselect('careSelect')">
+                            <div class="selected-items" id="careSelected"><span style="color:#999;">Select interventions...</span></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="careDropdown"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label data-translate="medications_given">Medications Administered</label>
+                    <textarea name="medications_given" rows="3" placeholder="List medications given with dosage..."></textarea>
+                </div>
+
+                <!-- ERCP Advice now in Pre-Hospital form -->
+                <div class="form-group">
+                    <label data-translate="ercp_advice">ERCP Advice</label>
+                    <div class="multiselect" id="ercpSelect">
+                        <div class="multiselect-toggle" onclick="app.toggleMultiselect('ercpSelect')">
+                            <div class="selected-items" id="ercpSelected"><span style="color:#999;">Select advice...</span></div>
+                        </div>
+                        <div class="multiselect-dropdown" id="ercpDropdown"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label data-translate="transport_events">Events During Transport</label>
+                    <div class="radio-group">
+                        <div class="radio-item"><input type="radio" name="transport_event" id="event_improved" value="improved" /><label for="event_improved">Improved</label></div>
+                        <div class="radio-item"><input type="radio" name="transport_event" id="event_stable" value="stable" /><label for="event_stable">Stable</label></div>
+                        <div class="radio-item"><input type="radio" name="transport_event" id="event_worse" value="worse" /><label for="event_worse">Worsened</label></div>
+                        <div class="radio-item"><input type="radio" name="transport_event" id="event_death" value="death" /><label for="event_death">Death</label></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="form-step" data-step="6">
+            <div class="card">
+                <div class="card-header"><div class="card-icon">🏥</div><h2 data-translate="admission">Admission Details</h2></div>
+                <div class="form-group">
+                    <label data-translate="hospital_name">Receiving Hospital</label>
+                    <div class="multiselect" id="hospitalSelect">
+                        <div class="multiselect-toggle" onclick="app.hospitalLookup.showHospitalSelector()">
+                            <input type="text" name="hospital_name" placeholder="Search or select hospital..." readonly />
+                        </div>
+                        <div class="multiselect-dropdown" id="hospitalDropdown"></div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label data-translate="handover_time">Handover Time</label><input type="time" name="handover_time" /></div>
+                    <div class="form-group"><label data-translate="receiving_staff">Receiving Staff Name</label><input type="text" name="receiving_staff" placeholder="Name of receiving medical staff" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label data-translate="staff_designation">Staff Designation</label><input type="text" name="staff_designation" placeholder="Doctor/Nurse/etc." /></div>
+                    <div class="form-group"><label data-translate="emt_name">EMT Name</label><input type="text" name="emt_name" placeholder="Emergency Medical Technician name" /></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label data-translate="pilot_name">Pilot/Driver Name</label><input type="text" name="pilot_name" placeholder="Ambulance driver name" /></div>
+                    <div class="form-group"><label data-translate="vehicle_number">Ambulance Number</label><input type="text" name="vehicle_number" placeholder="TN XX XX XXXX" /></div>
+                </div>
+                <div class="form-group"><label data-translate="handover_notes">Handover Notes</label><textarea name="handover_notes" rows="3" placeholder="Additional notes for handover..."></textarea></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>EMT Signature</label>
+                        <div class="signature-pad">
+                            <canvas id="emtSignatureCanvas"></canvas>
+                            <button type="button" onclick="app.clearSignature('emt')">Clear</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Receiving Staff Signature</label>
+                        <div class="signature-pad">
+                            <canvas id="staffSignatureCanvas"></canvas>
+                            <button type="button" onclick="app.clearSignature('staff')">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-buttons">
+            <button type="button" class="btn btn-secondary" id="prevBtn" onclick="app.previousStep()">← Previous</button>
+            <button type="button" class="btn btn-primary" id="nextBtn" onclick="app.nextStep()">Next →</button>
+            <button type="button" class="btn btn-success" id="submitBtn" style="display:none;" onclick="app.submitForm()">✓ Submit Form</button>
+        </div>
+    </form>
+
+    <div class="spinner" id="spinner"></div>
+</div>
+
+<script>
+const app = {
+    currentStep: 1,
+    totalSteps: 6,
+    currentLang: 'en',
+    formData: {},
+    timestamps: { caseCreated: null, arrivedAtScene: null, departedScene: null, arrivedHospital: null },
+
+    symptoms: [
+        "Abdominal Distension","Abdominal Pain","Altered Consciousness","Amputation","Animal Bite","Back Pain","Bleeding","Burns","Chest Pain","Choking",
+        "Confusion","Convulsion","Deformity","Difficulty Breathing","Difficulty Speaking","Dizziness","Electrocution","Fainting","Fever","Fracture",
+        "Headache","Hyperglycemia","Hypoglycemia","Hypertension","Hypotension","Labour Pain","Laceration","Nausea","Open Wound","Poisoning","Shock",
+        "Skin Rashes","Swelling","Trauma","Unconscious","Vomiting","Weakness"
+    ],
+    history: [
+        "Asthma","Cancer","Cardiac Disease","COPD","Diabetes","Epilepsy","HIV/AIDS","Hepatitis","Hypertension","Kidney Disease","Liver Disease",
+        "Mental Health","Respiratory Disease","Stroke","Thyroid","Tuberculosis","Previous Surgeries","Trauma History"
+    ],
+    interventions: [
+        "Oxygen Administration","IV Access","Cardiac Monitoring","CPR","Defibrillation","Airway Management","Spinal Immobilization",
+        "Bleeding Control","Wound Dressing","Splinting","Pain Management","Glucose Administration","Nebulization","Suction","Temperature Management",
+        "Position Management","Psychological Support"
+    ],
+    ercpAdvice: [
+        "NPO (Nothing by Mouth)","IV Fluids Maintained","Antibiotics Prophylaxis","Pain Management","Monitor Vital Signs","Prepare for Possible Surgery",
+        "Labs: CBC, LFT, Amylase/Lipase","IV Contrast Allergy Check","Review Medications","Diabetic Management Plan"
+    ],
+
+    translations: {
+        en: {
+            title:"EEMS Pre-Hospital Care Record",
+            subtitle:"EMRI GREEN HEALTH SERVICES – GVK EMRI<br>108 Emergency Ambulance Service",
+            case_details:"Case Details", patient_name:"Patient Name", gender:"Gender", age_group:"Age Group", age:"Age",
+            loc:"Level of Consciousness (AVPU)", breathing:"Breathing Pattern", chief_complaint:"Chief Complaint",
+            triage:"Triage Category", critical:"Critical Patient",
+            patient_address:"Patient Address", ration_card:"Ration Card Type", social_status:"Social Status",
+            id_proof:"ID Proof Number", contact:"Contact Number", address:"Address",
+            signs_symptoms:"Signs & Symptoms", select_symptoms:"Select all applicable symptoms",
+            vitals:"Vital Signs", care_history:"Pre-Hospital Care & History", past_history:"Past Medical History",
+            medications:"Current Medications", allergies:"Allergies", interventions:"Interventions Performed",
+            medications_given:"Medications Administered", transport_events:"Events During Transport",
+            admission:"Admission Details", hospital_name:"Receiving Hospital", handover_time:"Handover Time",
+            receiving_staff:"Receiving Staff Name", staff_designation:"Staff Designation", handover_notes:"Handover Notes",
+            emt_name:"EMT Name", pilot_name:"Pilot/Driver Name", vehicle_number:"Ambulance Number",
+            ercp_advice:"ERCP Advice"
+        },
+        ta: {
+            title:"EEMS முன் மருத்துவ பராமரிப்பு பதிவு",
+            subtitle:"EMRI கிரீன் ஹெல்த் சர்வீசஸ் – GVK EMRI<br>108 அவசர ஆம்புலன்ஸ் சேவை",
+            case_details:"வழக்கு விவரங்கள்", patient_name:"நோயாளி பெயர்", gender:"பாலினம்", age_group:"வயது குழு", age:"வயது",
+            loc:"நனவு நிலை (AVPU)", breathing:"சுவாச முறை", chief_complaint:"முக்கிய புகார்",
+            triage:"முன்னுரிமை வகை", critical:"தீவிர நோயாளி",
+            patient_address:"நோயாளி முகவரி", ration_card:"ரேஷன் கார்டு வகை", social_status:"சமூக நிலை",
+            id_proof:"அடையாள ஆதாரம்", contact:"தொடர்பு எண்", address:"முகவரி",
+            signs_symptoms:"அறிகுறிகள்", select_symptoms:"பொருந்தும் அறிகுறிகளைத் தேர்ந்தெடுக்கவும்",
+            vitals:"உயிர் அறிகுறிகள்", care_history:"முன் மருத்துவ பராமரிப்பு & வரலாறு", past_history:"கடந்த மருத்துவ வரலாறு",
+            medications:"தற்போதைய மருந்துகள்", allergies:"ஒவ்வாமை", interventions:"செய்யப்பட்ட தலையீடுகள்",
+            medications_given:"கொடுக்கப்பட்ட மருந்துகள்", transport_events:"போக்குவரத்தின் போது நிகழ்வுகள்",
+            admission:"சேர்க்கை விவரங்கள்", hospital_name:"பெறும் மருத்துவமனை", handover_time:"ஒப்படைப்பு நேரம்",
+            receiving_staff:"பெறும் ஊழியர் பெயர்", staff_designation:"ஊழியர் பதவி", handover_notes:"ஒப்படைப்பு குறிப்புகள்",
+            emt_name:"EMT பெயர்", pilot_name:"ஓட்டுநர் பெயர்", vehicle_number:"ஆம்புலன்ஸ் எண்",
+            ercp_advice:"ERCP ஆலோசனை"
+        }
+    },
+
+    hospitalLookup: {
+        nearbyHospitals: [],
+        init: function() {
+            this.nearbyHospitals = [
+                { id:1, name:"Government General Hospital", specialty:"Trauma", distance:"2.5km", beds:15, hasCT:true },
+                { id:2, name:"Apollo Speciality Hospital", specialty:"Cardiac", distance:"3.1km", beds:8, cathLab:true },
+                { id:3, name:"Children's Hospital", specialty:"Pediatrics", distance:"4.2km", beds:12, pediatricICU:true }
+            ];
+        },
+        showHospitalSelector: function() {
+            const dropdown = document.getElementById('hospitalDropdown');
+            dropdown.innerHTML = this.nearbyHospitals.map(h => `
+                <div class="hospital-option" onclick="app.hospitalLookup.selectHospital(${h.id})">
+                    <strong>${h.name}</strong><br />
+                    <small>Specialty: ${h.specialty} • ${h.distance} • ${h.beds} beds available</small>
+                </div>
+            `).join('');
+            document.getElementById('hospitalSelect').classList.add('active');
+        },
+        selectHospital: function(id) {
+            const hospital = this.nearbyHospitals.find(h => h.id === id);
+            document.querySelector('input[name="hospital_name"]').value = hospital.name;
+            app.showAlert(`Selected ${hospital.name} (Specialty: ${hospital.specialty})`, 'success');
+            document.getElementById('hospitalSelect').classList.remove('active');
+            if (hospital.specialty === "Cardiac" && !(app.formData.care || []).includes("Cardiac Monitoring")) {
+                app.showClinicalAlert("Cardiac Center Selected", "Consider adding cardiac monitoring to interventions");
+            }
+        }
+    },
+
+    clinicalRules: {
+        checkTriage: function() {
+            const vitals = app.formData; let alerts = [];
+            if (vitals.bp_scene && /^\d{2,3}\/\d{2,3}$/.test(vitals.bp_scene)) {
+                const [systolic] = vitals.bp_scene.split('/').map(Number);
+                if (systolic < 90) {
+                    alerts.push("Systolic BP < 90 - Consider shock protocol");
+                    if (!document.getElementById('triage_red_r').checked) {
+                        app.showClinicalAlert("Hypotension Detected", "Patient meets criteria for Red Triage (Resuscitation)");
+                        document.getElementById('triage_red_r').checked = true;
+                    }
+                }
+            }
+            if (vitals.spo2_scene && vitals.spo2_scene < 90) {
+                alerts.push("SpO₂ < 90% - Consider oxygen therapy");
+                if (!app.formData.care?.includes("Oxygen Administration")) {
+                    app.showClinicalAlert("Hypoxia Detected", "Consider oxygen administration for SpO₂ < 90%");
+                }
+            }
+            if (vitals.loc && vitals.loc !== 'A') { alerts.push("Altered LOC - Monitor closely"); }
+            return alerts;
+        },
+        checkInterventions: function() {
+            const symptoms = app.formData.symptoms || [];
+            const interventions = app.formData.care || [];
+            let suggestions = [];
+            if (symptoms.some(s => ["Difficulty Breathing","Choking"].includes(s))) {
+                if (!interventions.includes("Oxygen Administration")) suggestions.push("Consider oxygen administration");
+                if (!interventions.includes("Airway Management")) suggestions.push("Assess airway management needs");
+            }
+            if (symptoms.some(s => ["Trauma","Fracture","Amputation"].includes(s))) {
+                if (!interventions.includes("Spinal Immobilization")) suggestions.push("Consider spinal immobilization for trauma");
+            }
+            if (symptoms.includes("Chest Pain")) {
+                if (!interventions.includes("Cardiac Monitoring")) suggestions.push("Consider cardiac monitoring for chest pain");
+                if (!interventions.includes("Aspirin Administration")) suggestions.push("Consider aspirin if cardiac origin suspected");
+            }
+            return suggestions;
+        },
+        checkVitalTrends: function() {
+            const vitals = app.formData; let trends = [];
+            if (vitals.bp_scene && vitals.bp_hospital && /^\d{2,3}\/\d{2,3}$/.test(vitals.bp_scene) && /^\d{2,3}\/\d{2,3}$/.test(vitals.bp_hospital)) {
+                const [sceneSystolic] = vitals.bp_scene.split('/').map(Number);
+                const [hospSystolic] = vitals.bp_hospital.split('/').map(Number);
+                const change = hospSystolic - sceneSystolic;
+                if (change < -20) trends.push(`Significant BP drop (${change}mmHg)`);
+            }
+            if (vitals.spo2_scene && vitals.spo2_hospital) {
+                const change = vitals.spo2_hospital - vitals.spo2_scene;
+                if (change < -5) trends.push(`Oxygen saturation decreasing (${change}%)`);
+            }
+            return trends;
+        }
+    },
+
+    compressImage: function(file, maxW=1200, maxH=1200, quality=0.75) {
+        return new Promise((resolve, reject) => {
+            try {
+                const img = new Image();
+                const url = URL.createObjectURL(file);
+                img.onload = () => {
+                    const ratio = Math.min(maxW / img.width, maxH / img.height, 1);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = Math.round(img.width * ratio);
+                    canvas.height = Math.round(img.height * ratio);
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    canvas.toBlob(blob => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(blob || file);
+                    }, 'image/jpeg', quality);
+                    URL.revokeObjectURL(url);
+                };
+                img.onerror = reject; img.src = url;
+            } catch (err) { reject(err); }
+        });
+    },
+
+    timeMetrics: {
+        getResponseTime: () => app.calculateDuration('caseCreated','arrivedAtScene'),
+        getSceneTime: () => app.calculateDuration('arrivedAtScene','departedScene'),
+        getTransportTime: () => app.calculateDuration('departedScene','arrivedHospital'),
+        getTotalTime: () => app.calculateDuration('caseCreated','arrivedHospital'),
+        displayMetrics: function() {
+            const r=this.getResponseTime(), s=this.getSceneTime(), t=this.getTransportTime(), tot=this.getTotalTime();
+            return `
+                <div class="time-metrics">
+                    <div class="time-metric"><div class="time-metric-value">${r?.toFixed(1)||'--'}</div><div class="time-metric-label">Response Time (min)</div></div>
+                    <div class="time-metric"><div class="time-metric-value">${s?.toFixed(1)||'--'}</div><div class="time-metric-label">On-Scene Time (min)</div></div>
+                    <div class="time-metric"><div class="time-metric-value">${t?.toFixed(1)||'--'}</div><div class="time-metric-label">Transport Time (min)</div></div>
+                    <div class="time-metric"><div class="time-metric-value">${tot?.toFixed(1)||'--'}</div><div class="time-metric-label">Total Time (min)</div></div>
+                </div>
+            `;
+        }
+    },
+
+    showClinicalAlert: function(title, message) {
+        const alert = document.createElement('div');
+        alert.className = 'clinical-alert';
+        alert.innerHTML = `<h4>⚠️ ${title}</h4><p>${message}</p>`;
+        const currentCard = document.querySelector(`.form-step[data-step="${this.currentStep}"] .card`);
+        if (currentCard) {
+            currentCard.insertBefore(alert, currentCard.children[1]);
+            setTimeout(()=>{ alert.style.opacity=0; setTimeout(()=>alert.remove(),500); },15000);
+        }
+    },
+
+    init: function() {
+        this.renderProgressSteps();
+        this.initializeMultiselects();
+        this.loadSavedData();
+
+        if (!this.formData.caseId) {
+            this.formData.caseId = 'EEMS-' + new Date().toISOString().replace(/\D/g,'').slice(0,14);
+            this.saveFormData();
+        }
+        this.updateCaseIdDisplay();
+
+        this.updateProgressBar();
+        this.updateNavigationButtons();
+        this.initSignaturePads();
+        this.hospitalLookup.init();
+
+        const medsTextarea = document.querySelector('textarea[name="medications_given"]');
+        if (medsTextarea) {
+            medsTextarea.addEventListener('change', function() {
+                const medLines = this.value.split('\n');
+                medLines.forEach(line => {
+                    const match = line.match(/(\w+)\s*(\d+\.?\d*)\s*mg/i);
+                    if (match) {
+                        // You can wire medicationSafety here if needed
+                    }
+                });
+            });
+        }
+        if (!localStorage.getItem('eemsFormData')) this.recordTimestamp('caseCreated');
+    },
+
+    updateCaseIdDisplay: function() {
+        const el = document.getElementById('caseIdDisplay');
+        if (el) el.textContent = this.formData.caseId ? `Case ID: ${this.formData.caseId}` : '';
+    },
+
+    renderProgressSteps: function() {
+        const stepsContainer = document.getElementById('progressSteps');
+        const stepNames = ['Case','Address','Symptoms','Vitals','Care & History','Admission'];
+        stepsContainer.innerHTML = '';
+        stepNames.forEach((name, i) => {
+            const step = document.createElement('div');
+            step.className = 'progress-step';
+            step.setAttribute('data-step', i+1);
+            if (i+1 === this.currentStep) step.classList.add('active');
+            if (i+1 < this.currentStep) step.classList.add('completed');
+            step.innerHTML = `<span>${name}</span>`;
+            stepsContainer.appendChild(step);
+        });
+    },
+
+    initializeMultiselects: function() {
+        this.renderMultiselect('symptoms', this.symptoms, 'symptomsDropdown', 'updateMultiselect');
+        this.renderMultiselect('history', this.history, 'historyDropdown', 'updateMultiselect');
+        this.renderMultiselect('care', this.interventions, 'careDropdown', 'updateMultiselect');
+        this.renderMultiselect('ercp', this.ercpAdvice, 'ercpDropdown', 'updateMultiselect');
+    },
+
+    renderMultiselect: function(id, options, dropdownId, updateFnName) {
+        const dropdown = document.getElementById(dropdownId);
+        dropdown.innerHTML = '';
+        options.forEach(option => {
+            const div = document.createElement('div');
+            div.className = 'multiselect-option';
+            const uniqueId = `${id}_${option.replace(/[\s/]+/g,'_')}`;
+            div.innerHTML = `
+                <input type="checkbox" id="${uniqueId}" value="${option}" onchange="app.${updateFnName}('${id}')">
+                <label for="${uniqueId}">${option}</label>
+            `;
+            dropdown.appendChild(div);
+        });
+    },
+
+    toggleMultiselect: function(id) {
+        const multiselect = document.getElementById(id);
+        multiselect.classList.toggle('active');
+        document.querySelectorAll('.multiselect').forEach(el => { if (el.id !== id) el.classList.remove('active'); });
+    },
+
+    updateMultiselect: function(id) {
+        const dropdown = document.getElementById(id + 'Dropdown');
+        const selectedDiv = document.getElementById(id + 'Selected');
+        const checkboxes = dropdown.querySelectorAll('input[type="checkbox"]:checked');
+        if (checkboxes.length === 0) {
+            selectedDiv.innerHTML = '<span style="color:#999;">Click to select...</span>';
+        } else {
+            selectedDiv.innerHTML = '';
+            checkboxes.forEach(cb => {
+                const tag = document.createElement('span');
+                tag.className = 'selected-tag';
+                tag.innerHTML = `${cb.value}<span class="remove" onclick="event.stopPropagation(); app.removeSelection('${id}','${cb.value}')">×</span>`;
+                selectedDiv.appendChild(tag);
+            });
+        }
+    },
+
+    removeSelection: function(id, value) {
+        const dropdown = document.getElementById(id + 'Dropdown');
+        const checkbox = dropdown.querySelector(`input[value="${value}"]`);
+        if (checkbox) { checkbox.checked = false; this.updateMultiselect(id); }
+    },
+
+    toggleAgeFields: function(ageGroup) {
+        const yearInput = document.querySelector('input[name="age_years"]');
+        const monthInput = document.querySelector('input[name="age_months"]');
+        const dayInput = document.querySelector('input[name="age_days"]');
+        yearInput.style.display = 'block'; monthInput.style.display = 'block'; dayInput.style.display = 'block';
+        switch (ageGroup) {
+            case 'neonate': yearInput.style.display='none'; monthInput.style.display='none'; break;
+            case 'infant': yearInput.style.display='none'; break;
+            case 'pediatric': dayInput.style.display='none'; break;
+            case 'adult': monthInput.style.display='none'; dayInput.style.display='none'; break;
+        }
+    },
+
+    updateProgressBar: function() {
+        const progressFill = document.getElementById('progressFill');
+        const progress = ((this.currentStep - 1) / (this.totalSteps - 1)) * 100;
+        progressFill.style.width = progress + '%';
+        document.querySelectorAll('.progress-step').forEach((step, i) => {
+            step.classList.remove('active','completed');
+            if (i+1 === this.currentStep) step.classList.add('active');
+            else if (i+1 < this.currentStep) step.classList.add('completed');
+        });
+    },
+
+    updateNavigationButtons: function() {
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        prevBtn.style.display = this.currentStep === 1 ? 'none' : 'inline-flex';
+        nextBtn.style.display = this.currentStep === this.totalSteps ? 'none' : 'inline-flex';
+        submitBtn.style.display = this.currentStep === this.totalSteps ? 'inline-flex' : 'none';
+    },
+
+    validateStep: function() {
+        const currentStepElement = document.querySelector(`.form-step[data-step="${this.currentStep}"]`);
+        const requiredFields = currentStepElement.querySelectorAll('[required]');
+        let isValid = true, firstInvalidField = null;
+        requiredFields.forEach(field => {
+            field.style.borderColor = '';
+            if (field.type === 'radio') {
+                const group = currentStepElement.querySelectorAll(`input[name="${field.name}"]`);
+                const checked = Array.from(group).some(r => r.checked);
+                if (!checked) {
+                    isValid = false; if (!firstInvalidField) firstInvalidField = field;
+                    group.forEach(r => r.parentElement.style.borderColor = 'var(--danger-color)');
+                }
+            } else if (!field.value.trim()) {
+                isValid = false; if (!firstInvalidField) firstInvalidField = field;
+                field.style.borderColor = 'var(--danger-color)';
+            }
+        });
+        if (!isValid) {
+            this.showAlert('Please fill all required fields marked with *', 'danger');
+            if (firstInvalidField) firstInvalidField.focus({ preventScroll: true });
+        }
+        return isValid;
+    },
+
+    nextStep: function() {
+        if (!this.validateStep()) return;
+        if (this.currentStep === 1) {
+            const alerts = this.clinicalRules.checkTriage();
+            if (alerts.length) this.showClinicalAlert("Triage Considerations", alerts.join('<br>'));
+        }
+        if (this.currentStep === 3) {
+            const suggestions = this.clinicalRules.checkInterventions();
+            if (suggestions.length) this.showClinicalAlert("Intervention Suggestions", suggestions.join('<br>'));
+        }
+        if (this.currentStep === 4) {
+            const trends = this.clinicalRules.checkVitalTrends();
+            if (trends.length) this.showClinicalAlert("Vital Sign Trends", trends.join('<br>'));
+        }
+        this.saveFormData();
+        if (this.currentStep < this.totalSteps) {
+            document.querySelector(`.form-step[data-step="${this.currentStep}"]`).classList.remove('active');
+            this.currentStep++;
+            document.querySelector(`.form-step[data-step="${this.currentStep}"]`).classList.add('active');
+            this.updateProgressBar();
+            this.updateNavigationButtons();
+            window.scrollTo(0, 0);
+            if (this.currentStep === 3) this.recordTimestamp('arrivedAtScene');
+            if (this.currentStep === 5) this.recordTimestamp('departedScene');
+            if (this.currentStep === 6) {
+                this.recordTimestamp('arrivedHospital');
+                const metricsHTML = this.timeMetrics.displayMetrics();
+                const admissionCard = document.querySelector('.form-step[data-step="6"] .card');
+                if (admissionCard) admissionCard.insertAdjacentHTML('afterbegin', metricsHTML);
+            }
+        }
+    },
+
+    previousStep: function() {
+        if (this.currentStep > 1) {
+            this.saveFormData();
+            document.querySelector(`.form-step[data-step="${this.currentStep}"]`).classList.remove('active');
+            this.currentStep--;
+            document.querySelector(`.form-step[data-step="${this.currentStep}"]`).classList.add('active');
+            this.updateProgressBar();
+            this.updateNavigationButtons();
+            window.scrollTo(0, 0);
+        }
+    },
+
+    saveFormData: function() {
+        const form = document.getElementById('eemsForm');
+        const formData = new FormData(form);
+        const data = {};
+        for (let [k, v] of formData.entries()) {
+            if (k === 'photos') continue;
+            data[k] = v;
+        }
+        ['symptoms','history','care','ercp'].forEach(id => {
+            const checkboxes = document.querySelectorAll(`#${id}Dropdown input[type="checkbox"]:checked`);
+            data[id] = Array.from(checkboxes).map(cb => cb.value);
+        });
+        data.ercpAdvice = data.ercp; // mirror for report compatibility
+
+        data.photos = this.formData.photos || [];
+        data.emtSignature = this.formData.emtSignature;
+        data.staffSignature = this.formData.staffSignature;
+        data.timestamps = this.timestamps;
+        data.caseId = this.formData.caseId || data.caseId;
+
+        try {
+            localStorage.setItem('eemsFormData', JSON.stringify(data));
+            this.formData = data;
+        } catch (e) {
+            this.showAlert('Storage is full. Please remove some photos or data.', 'danger');
+        }
+    },
+
+    loadSavedData: function() {
+        const saved = localStorage.getItem('eemsFormData');
+        if (!saved) return;
+        this.formData = JSON.parse(saved);
+        const form = document.getElementById('eemsForm');
+
+        Object.keys(this.formData).forEach(key => {
+            const field = form.elements[key];
+            if (field) {
+                if (field.type === 'radio') {
+                    form.querySelectorAll(`[name="${key}"]`).forEach(f => f.checked = f.value === this.formData[key]);
+                } else {
+                    field.value = this.formData[key];
+                }
+            }
+        });
+
+        // Backward compat: if ercpAdvice exists but ercp missing
+        if (!this.formData.ercp && Array.isArray(this.formData.ercpAdvice)) {
+            this.formData.ercp = this.formData.ercpAdvice;
+        }
+
+        ['symptoms','history','care','ercp'].forEach(id => {
+            if (Array.isArray(this.formData[id])) {
+                this.formData[id].forEach(value => {
+                    const cb = document.querySelector(`#${id}Dropdown input[value="${value}"]`);
+                    if (cb) cb.checked = true;
+                });
+                this.updateMultiselect(id);
+            }
+        });
+
+        if (this.formData.photos) {
+            const preview = document.getElementById('photoPreview');
+            preview.innerHTML = '';
+            this.formData.photos.forEach(p => {
+                const img = document.createElement('img');
+                img.src = p.data; preview.appendChild(img);
+            });
+        }
+
+        if (this.formData.emtSignature) this.loadSignature('emtSignatureCanvas', this.formData.emtSignature);
+        if (this.formData.staffSignature) this.loadSignature('staffSignatureCanvas', this.formData.staffSignature);
+        if (this.formData.timestamps) this.timestamps = this.formData.timestamps;
+        if (this.formData.age_group) this.toggleAgeFields(this.formData.age_group);
+    },
+
+    loadSignature: function(canvasId, dataUrl) {
+        const canvas = document.getElementById(canvasId);
+        if (!canvas || !dataUrl) return;
+        const ctx = canvas.getContext('2d');
+        const DPR = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        if (canvas.width === 0 || canvas.height === 0) {
+            const visualWidth = rect.width || canvas.parentElement.clientWidth || 600;
+            const visualHeight = 150;
+            canvas.width = Math.max(1, Math.round(visualWidth * DPR));
+            canvas.height = Math.max(1, Math.round(visualHeight * DPR));
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        }
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height);
+        img.src = dataUrl;
+    },
+
+    clearForm: function() {
+        if (!confirm('Are you sure you want to clear all form data and start a new record?')) return;
+        localStorage.removeItem('eemsFormData');
+        document.getElementById('eemsForm').reset();
+        ['symptoms','history','care','ercp'].forEach(id => {
+            document.querySelectorAll(`#${id}Dropdown input`).forEach(cb => cb.checked = false);
+            this.updateMultiselect(id);
+        });
+        this.clearSignature('emt'); this.clearSignature('staff');
+        document.getElementById('photoPreview').innerHTML = '';
+        this.formData = {}; this.timestamps = {}; this.currentStep = 1;
+        document.querySelectorAll('.form-step').forEach((step, i) => step.classList.toggle('active', i===0));
+        this.formData.caseId = 'EEMS-' + new Date().toISOString().replace(/\D/g,'').slice(0,14);
+        this.recordTimestamp('caseCreated');
+        this.updateCaseIdDisplay();
+        this.saveFormData();
+        this.updateProgressBar(); this.updateNavigationButtons();
+        this.showAlert('Form cleared. New record started.', 'success');
+        window.scrollTo(0,0);
+    },
+
+    submitForm: function() {
+        if (!this.validateStep()) return;
+        this.saveFormData();
+        this.recordTimestamp('arrivedHospital');
+        document.body.classList.add('loading');
+        setTimeout(() => { document.body.classList.remove('loading'); this.showConfirmationModal(); }, 800);
+    },
+
+    showConfirmationModal: function() {
+        const existing = document.querySelector('.modal-overlay'); if (existing) existing.remove();
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <h3>Confirm Submission</h3>
+                <p>Please review the information before final submission.</p>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="app.closeModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="app.finalSubmit()">Final Submit & Print</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    },
+
+    closeModal: function() {
+        const modal = document.querySelector('.modal-overlay'); if (modal) modal.remove();
+    },
+
+    finalSubmit: function() {
+        if (!this.formData.emtSignature || !this.formData.staffSignature) {
+            this.showAlert('Warning: One or more signatures missing.', 'warning');
+        }
+        this.saveFormData();
+        this.generateReport();
+        this.closeModal();
+        setTimeout(()=> this.clearForm(), 1500);
+    },
+
+    generateReport: function() {
+        const w = window.open('', '_blank');
+        const html = this.generateReportHTML();
+        w.document.write(html); w.document.close();
+        w.onload = () => w.print();
+    },
+
+    generateReportHTML: function() {
+        const data = this.formData;
+        const currentDate = new Date().toLocaleString('en-IN');
+        const stats = this.generateStatistics();
+        const vitalsTrendHTML = Object.entries(stats.vitalsTrend || {}).map(([k,v]) => `
+            <tr>
+                <td>${k}</td>
+                <td>${v.scene}</td>
+                <td>${v.hospital}</td>
+                <td style="color:${parseFloat(v.change)>0?'green':'red'};">${parseFloat(v.change)>0?'+':''}${v.change}</td>
+                <td style="color:${parseFloat(v.change)>0?'green':'red'};">${parseFloat(v.change)>0?'+':''}${v.percentChange}%</td>
+            </tr>
+        `).join('');
+
+        return `
+<!DOCTYPE html><html lang="en"><head><title>EEMS Pre-Hospital Care Record</title><style>
+body { font-family: Arial, sans-serif; padding: 20px; font-size: 12px; }
+.header-print { text-align: center; border-bottom: 2px solid #00897b; padding-bottom: 10px; margin-bottom: 20px; }
+.header-print h1 { color: #00897b; margin: 0; }
+.header-print p { margin: 2px 0; }
+h2 { color: #00897b; border-bottom: 1px solid #b2dfdb; padding-bottom: 5px; margin-top: 20px; }
+.grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.section { break-inside: avoid; margin-bottom: 15px; }
+.field { margin-bottom: 8px; }
+.label { font-weight: bold; display: inline-block; width: 140px; vertical-align: top; }
+.value { display: inline-block; width: calc(100% - 150px); }
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+th { background: #e0f2f1; }
+.signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 20px; }
+.sig-box { border: 1px solid #ccc; padding: 10px; text-align: center; }
+.sig-box img { max-width: 100%; height: 80px; object-fit: contain; }
+.sig-box p { margin: 5px 0 0 0; }
+.photos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.photos-grid img { width: 100%; height: 120px; object-fit: cover; border: 1px solid #ddd; }
+.time-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin: 20px 0; }
+.time-metric { background: #f7f7f7; padding: 10px; border-radius: 4px; text-align: center; }
+.time-metric-value { font-size: 1.3rem; font-weight: bold; color: #00897b; }
+.time-metric-label { font-size: 0.8rem; color: #666; }
+.clinical-summary { border:1px solid #ddd; padding:10px; background:#f9f9f9; margin-bottom:15px; }
+@media print { body { -webkit-print-color-adjust: exact; } .page-break { page-break-after: always; } }
+</style></head><body>
+<div class="header-print">
+    <h1>EEMS Pre-Hospital Care Record</h1>
+    <p>EMRI GREEN HEALTH SERVICES – GVK EMRI 108</p>
+    <p>Case ID: ${data.caseId || 'N/A'} | Generated: ${currentDate} | EMT: ${data.emt_name || 'N/A'}</p>
+</div>
+
+<div class="grid-container">
+    <div class="section"><h2>Case & Patient Details</h2>
+        <div class="field"><span class="label">Patient Name:</span><span class="value">${data.patient_name || 'N/A'}</span></div>
+        <div class="field"><span class="label">Age:</span><span class="value">${data.age_years || '0'}y, ${data.age_months || '0'}m, ${data.age_days || '0'}d</span></div>
+        <div class="field"><span class="label">Gender:</span><span class="value">${data.gender || 'N/A'}</span></div>
+        <div class="field"><span class="label">Contact:</span><span class="value">${data.contact || 'N/A'}</span></div>
+        <div class="field"><span class="label">Address:</span><span class="value">${data.address || 'N/A'}</span></div>
+        <div class="field"><span class="label">ID Proof:</span><span class="value">${data.id_proof || 'N/A'}</span></div>
+    </div>
+    <div class="section"><h2>Initial Assessment</h2>
+        <div class="field"><span class="label">Chief Complaint:</span><span class="value">${data.chief_complaint || 'N/A'}</span></div>
+        <div class="field"><span class="label">Triage:</span><span class="value" style="font-weight:bold; color:${data.triage?.includes('red') ? 'red' : data.triage === 'yellow' ? 'orange' : 'green'};">${data.triage || 'N/A'}</span></div>
+        <div class="field"><span class="label">LOC (AVPU):</span><span class="value">${data.loc || 'N/A'}</span></div>
+        <div class="field"><span class="label">Breathing:</span><span class="value">${data.breathing || 'N/A'}</span></div>
+        <div class="field"><span class="label">Critical Patient:</span><span class="value">${data.critical || 'N/A'}</span></div>
+        <div class="field"><span class="label">Patient Status:</span><span class="value">${data.transport_event || 'N/A'}</span></div>
+    </div>
+</div>
+
+<div class="section"><h2>Signs, Symptoms & History</h2>
+    <div class="field"><span class="label">Symptoms:</span><span class="value">${data.symptoms?.join(', ') || 'None reported'}</span></div>
+    <div class="field"><span class="label">Past History:</span><span class="value">${data.history?.join(', ') || 'None reported'}</span></div>
+    <div class="field"><span class="label">Allergies:</span><span class="value">${data.allergies || 'None reported'}</span></div>
+    <div class="field"><span class="label">Current Meds:</span><span class="value">${data.medications || 'None reported'}</span></div>
+</div>
+
+<div class="section"><h2>Vital Signs</h2>
+<table>
+    <thead><tr><th>Vital Sign</th><th>At Scene</th><th>Enroute</th><th>At Hospital</th></tr></thead>
+    <tbody>
+        <tr><td>BP</td><td>${data.bp_scene || '-'}</td><td>${data.bp_enroute || '-'}</td><td>${data.bp_hospital || '-'}</td></tr>
+        <tr><td>Pulse</td><td>${data.pulse_scene || '-'}</td><td>${data.pulse_enroute || '-'}</td><td>${data.pulse_hospital || '-'}</td></tr>
+        <tr><td>RR</td><td>${data.rr_scene || '-'}</td><td>${data.rr_enroute || '-'}</td><td>${data.rr_hospital || '-'}</td></tr>
+        <tr><td>SpO₂</td><td>${data.spo2_scene || '-'}</td><td>${data.spo2_enroute || '-'}</td><td>${data.spo2_hospital || '-'}</td></tr>
+        <tr><td>Temp (°F)</td><td>${data.temp_scene || '-'}</td><td>${data.temp_enroute || '-'}</td><td>${data.temp_hospital || '-'}</td></tr>
+        <tr><td>Sugar</td><td>${data.sugar_scene || '-'}</td><td>${data.sugar_enroute || '-'}</td><td>${data.sugar_hospital || '-'}</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="section"><h2>Treatment & Handover</h2>
+    <div class="field"><span class="label">Interventions:</span><span class="value">${data.care?.join(', ') || 'None'}</span></div>
+    <div class="field"><span class="label">Meds Administered:</span><span class="value">${data.medications_given || 'None'}</span></div>
+    <div class="field"><span class="label">ERCP Advice:</span><span class="value">${(data.ercpAdvice && data.ercpAdvice.length) ? data.ercpAdvice.join(', ') : (data.ercp?.join(', ') || 'None')}</span></div>
+    <div class="field"><span class="label">Handover Notes:</span><span class="value">${data.handover_notes || 'None'}</span></div>
+</div>
+
+<div class="section"><h2>Clinical Summary</h2>
+    <div class="clinical-summary">${this.generateClinicalSummary()}</div>
+</div>
+
+<div class="section"><h2>Response Time Metrics</h2>${this.timeMetrics.displayMetrics()}</div>
+
+<div class="section"><h2>Vitals Trend (Scene to Hospital)</h2>
+<table>
+    <thead><tr><th>Vital</th><th>Scene</th><th>Hospital</th><th>Change</th><th>%</th></tr></thead>
+    <tbody>${vitalsTrendHTML || '<tr><td colspan="5">Not enough data for trend analysis.</td></tr>'}</tbody>
+</table>
+</div>
+
+${data.photos?.length > 0 ? `<div class="section"><h2>Photo Documentation</h2><div class="photos-grid">${data.photos.map(p => `<img src="${p.data}">`).join('')}</div></div>` : ''}
+
+<h2>Signatures</h2>
+<div class="signatures">
+    <div class="sig-box"><h3>EMT</h3>${data.emtSignature ? `<img src="${data.emtSignature}">` : '<p>No Signature</p>'}<p>${data.emt_name || 'N/A'}</p></div>
+    <div class="sig-box"><h3>Receiving Staff</h3>${data.staffSignature ? `<img src="${data.staffSignature}">` : '<p>No Signature</p>'}<p>${data.receiving_staff || 'N/A'} (${data.staff_designation || 'N/A'})</p></div>
+    <div class="sig-box"><h3>Ambulance</h3><p style="font-size:1.5em;font-weight:bold;">${data.vehicle_number || 'N/A'}</p><p>Pilot: ${data.pilot_name || 'N/A'}</p></div>
+</div>
+</body></html>`;
+    },
+
+    generateClinicalSummary: function() {
+        const d = this.formData; const out = [];
+        out.push(`<strong>Triage:</strong> <span style="color:${d.triage?.includes('red') ? 'red' : d.triage === 'yellow' ? 'orange' : 'green'};">${d.triage || 'Not specified'}</span>`);
+        const findings = [];
+        if (d.loc && d.loc !== 'A') findings.push('Altered LOC');
+        if (d.spo2_scene && d.spo2_scene < 90) findings.push('Hypoxia');
+        if (d.bp_scene && /^\d{2,3}\/\d{2,3}$/.test(d.bp_scene)) {
+            const [sys] = d.bp_scene.split('/').map(Number);
+            if (sys < 90) findings.push('Hypotension');
+        }
+        if (findings.length) out.push(`<strong>Key Findings:</strong> ${findings.join(', ')}`);
+        if (d.care?.length) out.push(`<strong>Interventions:</strong> ${d.care.join(', ')}`);
+        if (d.medications_given) {
+            const meds = d.medications_given.split('\n').filter(m => m.trim());
+            if (meds.length) out.push(`<strong>Medications:</strong> ${meds.join(', ')}`);
+        }
+        if (d.ercpAdvice?.length) out.push(`<strong>ERCP Advice:</strong> ${d.ercpAdvice.join(', ')}`);
+        if (d.transport_event) out.push(`<strong>Outcome:</strong> Condition ${d.transport_event} during transport`);
+        return out.join('<br>');
+    },
+
+    showAlert: function(message, type='info') {
+        const c = document.getElementById('alertContainer');
+        const el = document.createElement('div');
+        el.className = `alert alert-${type}`;
+        el.innerHTML = `<span>${type==='success'?'✓':type==='danger'?'⚠':type==='warning'?'⚠':'ℹ'}</span> ${message}`;
+        c.prepend(el);
+        setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),300); },4000);
+    },
+
+    setLanguage: function(lang) {
+        this.currentLang = lang;
+        document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.lang === lang));
+        Object.entries(this.translations[lang]).forEach(([k,v]) => {
+            document.querySelectorAll(`[data-translate="${k}"]`).forEach(el => el.innerHTML = v);
+        });
+    },
+
+    recordTimestamp: function(event) {
+        if (!this.timestamps[event]) {
+            this.timestamps[event] = new Date().toISOString();
+            this.saveFormData();
+        }
+    },
+
+    calculateDuration: function(startEvent, endEvent) {
+        if (this.timestamps[startEvent] && this.timestamps[endEvent]) {
+            const start = new Date(this.timestamps[startEvent]);
+            const end = new Date(this.timestamps[endEvent]);
+            return (end - start) / (1000 * 60);
+        }
+        return null;
+    },
+
+    analyzeVitalTrends: function() {
+        const trends = {};
+        const fields = [
+            { name:'pulse', label:'Pulse' }, { name:'rr', label:'Resp. Rate' },
+            { name:'spo2', label:'SpO₂' }, { name:'sugar', label:'Sugar' }
+        ];
+        fields.forEach(f => {
+            const s = parseFloat(this.formData[`${f.name}_scene`]);
+            const h = parseFloat(this.formData[`${f.name}_hospital`]);
+            if (!isNaN(s) && !isNaN(h) && s > 0) {
+                const change = h - s, pct = (change / s) * 100;
+                trends[f.label] = { scene: s.toFixed(0), hospital: h.toFixed(0), change: change.toFixed(1), percentChange: pct.toFixed(1) };
+            }
+        });
+        return trends;
+    },
+
+    generateStatistics: function() {
+        return {
+            totalTime: this.calculateDuration('caseCreated','arrivedHospital'),
+            responseTime: this.calculateDuration('caseCreated','arrivedAtScene'),
+            sceneDuration: this.calculateDuration('arrivedAtScene','departedScene'),
+            transportDuration: this.calculateDuration('departedScene','arrivedHospital'),
+            vitalsTrend: this.analyzeVitalTrends()
+        };
+    },
+
+    handlePhotos: async function(files) {
+        const preview = document.getElementById('photoPreview');
+        preview.innerHTML = ''; this.formData.photos = [];
+        for (const file of Array.from(files)) {
+            try {
+                const dataUrl = await this.compressImage(file, 1200, 1200, 0.75);
+                const img = document.createElement('img'); img.src = dataUrl; preview.appendChild(img);
+                this.formData.photos.push({ name: file.name, type: 'image/jpeg', data: dataUrl });
+                this.saveFormData();
+            } catch { this.showAlert('Could not process photo. Try a smaller image.', 'warning'); }
+        }
+    },
+
+    initSignaturePads: function() {
+        this.initSignaturePad('emtSignatureCanvas','emtSignature');
+        this.initSignaturePad('staffSignatureCanvas','staffSignature');
+    },
+
+    initSignaturePad: function(canvasId, dataKey) {
+        const canvas = document.getElementById(canvasId); if (!canvas) return;
+        const ctx = canvas.getContext('2d'); const DPR = window.devicePixelRatio || 1;
+
+        const resize = () => {
+            const rect = canvas.getBoundingClientRect();
+            const w = rect.width || canvas.parentElement.clientWidth || 600;
+            const h = 150;
+            canvas.width = Math.max(1, Math.round(w * DPR));
+            canvas.height = Math.max(1, Math.round(h * DPR));
+            ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+            ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = 2; ctx.strokeStyle = '#000';
+        };
+        const getPos = (e) => {
+            const r = canvas.getBoundingClientRect();
+            return { x: e.clientX - r.left, y: e.clientY - r.top };
+        };
+        let drawing = false;
+        const start = (e) => {
+            e.preventDefault(); canvas.setPointerCapture(e.pointerId); drawing = true;
+            const p = getPos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x+0.01, p.y+0.01); ctx.stroke();
+        };
+        const move = (e) => { if (!drawing) return; e.preventDefault(); const p = getPos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+        const end = () => { if (!drawing) return; drawing = false; this.formData[dataKey] = canvas.toDataURL('image/png'); this.saveFormData(); };
+
+        resize(); window.addEventListener('resize', resize);
+        if (!canvas._signatureBound) {
+            canvas.addEventListener('pointerdown', start, { passive:false });
+            canvas.addEventListener('pointermove', move, { passive:false });
+            window.addEventListener('pointerup', end);
+            canvas._signatureBound = true;
+        }
+    },
+
+    clearSignature: function(type) {
+        const canvas = document.getElementById(`${type}SignatureCanvas`); if (!canvas) return;
+        const ctx = canvas.getContext('2d'); const DPR = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+        ctx.clearRect(0, 0, rect.width, rect.height); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, rect.width, rect.height);
+        delete this.formData[`${type}Signature`]; this.saveFormData();
+    }
+};
+
+// Global listeners
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.multiselect')) document.querySelectorAll('.multiselect.active').forEach(el => el.classList.remove('active'));
+});
+document.addEventListener('DOMContentLoaded', () => app.init());
+document.getElementById('eemsForm').addEventListener('submit', (e) => e.preventDefault());
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey) {
+        if (e.key === 'ArrowRight') { e.preventDefault(); app.nextStep(); }
+        if (e.key === 'ArrowLeft') { e.preventDefault(); app.previousStep(); }
+    }
+});
+</script>
+</body>
+</html>
